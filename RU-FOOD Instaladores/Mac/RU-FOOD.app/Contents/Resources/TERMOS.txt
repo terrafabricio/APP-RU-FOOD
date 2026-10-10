@@ -1,0 +1,132 @@
+﻿RU-FOOD — TERMOS E CONDIÇÕES DE USO
+Versão 1.0 · 8 de outubro de 2026
+
+Leia com atenção. A seção 7 descreve o que este instalador faz automaticamente, inclusive a instalação do Ollama sem nova confirmação.
+
+1. SOBRE ESTES TERMOS
+
+Estes Termos e Condições regem o uso do RU-FOOD, sistema de gestão do Restaurante Universitário da UFGD (Dourados/MS) operado por [NOME DA EMPRESA], inscrita no CNPJ [00.000.000/0000-00] (“Empresa”).
+
+Valem para todas as formas de acesso: o app do estudante, o totem, a TV, o painel de gestão na web, o app instalável (PWA) e a versão desktop para Windows e Mac. Ao usar qualquer uma delas, ou ao instalar a versão desktop, você declara que leu e concorda com estes termos.
+
+2. DEFINIÇÕES
+
+  • Estudante: quem consulta o cardápio, escolhe pratos ou avalia refeições pelo app, totem ou TV.
+
+  • Equipe: pessoas da Empresa ou da fiscalização com acesso ao painel de gestão (gestor, nutricionista, compras e fiscal).
+
+  • Versão web: o RU-FOOD aberto no navegador, em https://rufood.vercel.app.
+
+  • PWA: a mesma versão web instalada na tela inicial do celular ou do computador pelo navegador.
+
+  • Versão desktop: o pacote instalado no Windows (instalador RU-FOOD) ou no Mac (aplicativo RU-FOOD), que abre o painel numa janela própria e acrescenta a inteligência artificial local.
+
+  • Agente local: programa da versão desktop que roda no computador e liga o RU-FOOD à IA local.
+
+  • Estagiária: a assistente do painel de gestão.
+
+3. USO PELO ESTUDANTE
+
+O app do estudante é anônimo. Não pedimos nome, e-mail, CPF, RGA, telefone nem senha, e não há campos de texto livre.
+
+Para lembrar suas escolhas, o aparelho recebe um identificador aleatório que não revela quem você é. As escolhas de prato, a preferência alimentar que você marcar e as avaliações por toque são gravadas no banco de dados com esse identificador, apenas para planejar quantidades, reduzir desperdício e medir a satisfação.
+
+Você pode apagar tudo o que está ligado ao seu aparelho na tela Perfil, a qualquer momento. Apagar os dados do site no navegador também desfaz o vínculo com o identificador.
+
+4. USO PELA EQUIPE
+
+  • O acesso ao painel é pessoal. Só entram e-mails liberados pelo gestor em Perfis de acesso, com senha ou código enviado por e-mail.
+
+  • Não compartilhe sua senha nem os códigos recebidos. Você responde pelas ações feitas com o seu acesso.
+
+  • Toda alteração relevante (cardápios, regras, estoque, compras, decisões e documentos) fica registrada com autor, data e versão anterior, para auditoria e fiscalização do contrato.
+
+  • O gestor pode remover acessos a qualquer momento.
+
+5. ONDE OS DADOS FICAM E COMO SINCRONIZAM
+
+As versões web, PWA e desktop usam o mesmo banco de dados ao mesmo tempo. Uma alteração feita em qualquer uma delas aparece nas outras em poucos segundos. Por isso:
+
+  • Tudo o que é salvo, compartilhado ou sincronizado pelo RU-FOOD (cardápios, estoque, compras, fornecedores, escolhas e avaliações, equipe, registros de auditoria, documentos enviados à nuvem e anexos) é enviado e armazenado em serviços externos e NÃO fica apenas no seu computador. Hoje são eles: Supabase (banco de dados, autenticação, arquivos e tempo real) e Vercel (hospedagem do site e das funções de cálculo).
+
+  • Isso vale também para a versão desktop: ela abre o mesmo painel e grava no mesmo banco. Instalar o RU-FOOD no computador não torna locais os dados do sistema.
+
+  • Fica somente no computador, na versão desktop: os documentos importados na IA local (com o índice de busca gerado a partir deles), o token de pareamento e o registro de uso da IA, que guarda operação, modelo e duração, mas não o conteúdo. A pasta é %LOCALAPPDATA%\RU-FOOD\Inteligencia.
+
+  • Documentos marcados como RESTRITOS não são enviados à nuvem: o sistema bloqueia esse envio no banco de dados.
+
+  • Os dados trafegam com criptografia (HTTPS). O banco aplica regras de acesso por perfil (RLS): cada pessoa só lê e altera o que o seu perfil permite.
+
+  • Os serviços externos podem armazenar dados fora do Brasil e têm políticas próprias de privacidade e disponibilidade.
+
+  • Notificações (opcionais): ao ativá-las, o endereço de entrega gerado pelo navegador (Google, Apple, Mozilla ou Microsoft) fica guardado no Supabase, ligado ao e-mail da equipe ou, para alunos, ao código anônimo do aparelho. O texto de cada aviso passa por esses serviços de entrega. Desativar no aparelho ou apagar os dados remove a inscrição.
+
+6. INTELIGÊNCIA ARTIFICIAL
+
+  • Na versão web e no PWA não há inteligência artificial. A Estagiária responde com dados e cálculos do próprio sistema (código determinístico) e respostas prontas.
+
+  • A IA existe só na versão desktop e roda no próprio computador, pelo Ollama. Por padrão, nenhuma pergunta, documento ou dado é enviado a provedores externos de IA. O uso de IA externa fica desligado e só pode ser ativado por decisão expressa da Empresa.
+
+  • A IA nunca é a fonte da verdade. Números, prazos e regras vêm sempre do cálculo do sistema e são mostrados primeiro. A IA apenas explica com outras palavras ou busca trechos nos documentos importados, sempre com a indicação “gerado no seu computador” e o modelo usado.
+
+  • Respostas de IA podem conter erros. Confira a fonte antes de agir. Quando não há trecho que sustente a resposta, a Estagiária informa que não encontrou evidência suficiente.
+
+  • Decisões críticas, como aplicar um cardápio, emitir compras ou alterar regras do contrato, sempre dependem de aprovação humana registrada.
+
+7. VERSÃO DESKTOP E INSTALAÇÃO AUTOMÁTICA
+
+Ao executar o instalador RU-FOOD e aceitar estes termos, você autoriza que o instalador faça as etapas abaixo automaticamente, sem novas perguntas:
+
+  • Verificar se o Ollama está instalado no computador. Se NÃO estiver, baixar a versão oficial em ollama.com (cerca de 1,5 GB) e instalá-la em modo silencioso, sem pedir confirmação (no Mac, o aplicativo Ollama é copiado para a pasta Aplicativos). Se estiver instalado numa versão antiga demais para o EmbeddingGemma 2, atualizá-lo da mesma forma, também sem pedir confirmação. Nos demais casos, ele é mantido como está.
+
+  • Baixar o uv (Astral, pelo GitHub) e, com ele, uma cópia do Python 3.12 e do leitor de PDF (pypdf), usados só pelo agente local.
+
+  • Baixar os modelos de IA adequados à memória do computador: EmbeddingGemma 2, para busca nos documentos (cerca de 0,4 GB), e um modelo de conversa Qwen3 (de 1,4 GB a 5,2 GB, conforme a memória), se ainda não houver um instalado.
+
+  • Windows: criar a pasta do programa, a pasta de dados em %LOCALAPPDATA%\RU-FOOD, os atalhos no Menu Iniciar e na Área de Trabalho, e a inicialização automática do agente local junto com o Windows.
+
+  • Mac: na primeira abertura do aplicativo RU-FOOD (que você arrasta para a pasta Aplicativos), criar a pasta de dados em ~/Library/Application Support/RU-FOOD e a inicialização automática do agente local ao entrar no Mac (arquivo br.ufgd.rufood.agente em ~/Library/LaunchAgents).
+
+  • Iniciar o agente local na porta 8787, aceitando conexões apenas do próprio computador (127.0.0.1) e somente do site do RU-FOOD, com um token de pareamento gerado na instalação.
+
+Requisitos: Windows 10 ou 11 de 64 bits, ou macOS 12 (Monterey) ou mais novo; cerca de 12 GB livres e internet durante a instalação. Os downloads podem somar até 8 GB e consumir a franquia de dados da conexão. A IA local usa processador, memória e, se houver, placa de vídeo.
+
+O navegador pode pedir permissão para o site do RU-FOOD acessar dispositivos da rede local. Ela é necessária para o painel conversar com o agente local no mesmo computador.
+
+Reinstalar o pacote repara a instalação e atualiza os componentes, sem apagar os documentos importados.
+
+Desinstalação: o desinstalador remove o RU-FOOD, os atalhos e a inicialização automática, e pergunta se deve apagar a pasta de dados. O Ollama e os modelos baixados PERMANECEM no computador, porque podem ser usados por outros programas. Para removê-los, desinstale o Ollama em Configurações → Aplicativos e apague a pasta %USERPROFILE%\.ollama.
+
+Desinstalação no Mac: abra o RU-FOOD segurando a tecla Option e escolha Desinstalar. Isso remove a inicialização automática, o ambiente do agente e, se você confirmar, a pasta de dados. O Ollama e os modelos (~/.ollama) permanecem, pelo mesmo motivo.
+
+Componentes de terceiros e suas licenças: Ollama (MIT), uv (MIT/Apache-2.0), Python (PSF), pypdf (BSD), Qwen3 (Apache-2.0) e EmbeddingGemma 2 (Gemma Terms of Use, do Google). Ao instalar, você também aceita essas licenças.
+
+8. PRIVACIDADE E LGPD
+
+  • Dados do estudante: tratados de forma anônima, como descrito na seção 3.
+
+  • Dados da equipe: nome, e-mail, perfil e registros de ações, tratados para executar o contrato e cumprir obrigações de fiscalização e auditoria (LGPD, art. 7º, II e V).
+
+  • Controladora: [NOME DA EMPRESA]. Contato do encarregado de dados: [E-MAIL DO ENCARREGADO].
+
+  • Você pode pedir confirmação, acesso, correção ou eliminação dos seus dados pelo contato acima, respeitados os prazos legais de guarda dos registros do contrato.
+
+  • Não vendemos dados nem os usamos para publicidade. A telemetria de uso da IA local fica desligada.
+
+9. RESPONSABILIDADES E LIMITES
+
+  • O RU-FOOD apoia o planejamento e a gestão. As decisões finais são das pessoas responsáveis da Empresa e da fiscalização do contrato.
+
+  • Previsões de público, sugestões de compra e alternativas de cardápio são estimativas. Confira antes de agir.
+
+  • O sistema usa serviços de terceiros em planos gratuitos, sem garantia de disponibilidade contínua. Falhas de internet, de serviços externos ou do computador podem interromper o uso temporariamente.
+
+  • É proibido tentar burlar perfis de acesso, inserir dados falsos ou usar o sistema para fins alheios ao restaurante.
+
+10. ALTERAÇÕES E CONTATO
+
+Estes termos podem ser atualizados. A versão e a data ficam no topo da página, e mudanças relevantes são avisadas no painel.
+
+Dúvidas: [E-MAIL DE CONTATO]. Fica eleito o foro da comarca de Dourados/MS.
+
+Modelo sujeito a revisão jurídica pela Empresa antes da publicação definitiva.

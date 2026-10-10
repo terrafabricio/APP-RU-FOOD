@@ -1,0 +1,180 @@
+#!/bin/bash
+# RU-FOOD para Mac: na 1ª vez instala a IA local (sem novas perguntas depois do aceite dos Termos, seção 7);
+# nas próximas, garante o agente local no ar e abre o painel em janela própria.
+# Segurando Option ao abrir: Reparar ou Desinstalar.
+set -u
+SITE="https://rufood.vercel.app"
+RES="$(cd "$(dirname "$0")/../Resources" && pwd)"
+VERSAO="$(cat "$RES/VERSAO" 2>/dev/null || echo 1)"
+DADOS="$HOME/Library/Application Support/RU-FOOD"
+PROG="$DADOS/programa"
+UV="$DADOS/uv/uv"
+AGENTE="$PROG/agente.py"
+ROTULO="br.ufgd.rufood.agente"
+PLIST="$HOME/Library/LaunchAgents/$ROTULO.plist"
+LOG="$DADOS/instalacao.log"
+mkdir -p "$DADOS"
+
+passo() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$1" >> "$LOG"; }
+avisar() { passo "$1"; osascript -e "display notification \"${1//\"/\\\"}\" with title \"RU-FOOD\"" >/dev/null 2>&1; }
+# dialogo "texto" "botão1,botão2,..." "padrão" → imprime o botão escolhido (vazio se cancelar)
+dialogo() {
+  local lista b botoes=""; IFS=',' read -ra lista <<< "$2"
+  for b in "${lista[@]}"; do botoes="$botoes\"$b\","; done; botoes="{${botoes%,}}"
+  osascript -e "button returned of (display dialog \"${1//\"/\\\"}\" with title \"RU-FOOD\" buttons $botoes default button \"$3\" with icon note)" 2>/dev/null
+}
+falhar() {
+  passo "ERRO: $1"
+  local r; r=$(osascript -e "button returned of (display dialog \"Não foi possível concluir a instalação:\n\n${1//\"/\\\"}\n\nVocê pode abrir o RU-FOOD de novo para tentar outra vez.\" with title \"RU-FOOD\" buttons {\"Ver registro\", \"Fechar\"} default button \"Fechar\" with icon caution)" 2>/dev/null)
+  [ "$r" = "Ver registro" ] && open -e "$LOG"
+  exit 1
+}
+
+agente_ok() { curl -fs -m 2 http://127.0.0.1:8787/health >/dev/null 2>&1; }
+ollama_ok() { curl -fs -m 3 http://127.0.0.1:11434/api/version >/dev/null 2>&1; }
+achar_ollama() {
+  for a in "/Applications/Ollama.app" "$HOME/Applications/Ollama.app"; do [ -d "$a" ] && { echo "$a"; return; }; done
+  command -v ollama 2>/dev/null
+}
+instalar_ollama() {
+  avisar "Baixando o Ollama oficial (ollama.com, cerca de 1,5 GB)…"
+  local tmp; tmp="$(mktemp -d)"
+  curl -fL --retry 3 -o "$tmp/ollama.zip" https://ollama.com/download/Ollama-darwin.zip >>"$LOG" 2>&1 || falhar "Falha ao baixar o Ollama."
+  ditto -x -k "$tmp/ollama.zip" "$tmp/x" || falhar "Falha ao descompactar o Ollama."
+  local novo; novo="$(find "$tmp/x" -maxdepth 2 -name 'Ollama.app' -type d | head -1)"
+  [ -n "$novo" ] || falhar "O pacote do Ollama veio sem o aplicativo."
+  local destino="/Applications"; [ -w "$destino" ] || { destino="$HOME/Applications"; mkdir -p "$destino"; }
+  pkill -f "Ollama.app/Contents" 2>/dev/null; sleep 1
+  rm -rf "$destino/Ollama.app"; ditto "$novo" "$destino/Ollama.app" || falhar "Não foi possível copiar o Ollama para $destino."
+  rm -rf "$tmp"
+  passo "Ollama instalado em $destino/Ollama.app"
+}
+ligar_ollama() {
+  ollama_ok && return
+  local a; a="$(achar_ollama)"
+  case "$a" in *.app) open -g -a "$a" ;; "") falhar "Ollama não encontrado." ;; *) nohup "$a" serve >/dev/null 2>&1 & ;; esac
+  for _ in $(seq 60); do ollama_ok && return; sleep 2; done
+  falhar "O Ollama não respondeu na porta 11434."
+}
+rodar_agente() { "$UV" run --quiet --python 3.12 "$AGENTE" "$@"; }
+
+escrever_plist() {
+  mkdir -p "$(dirname "$PLIST")"
+  cat > "$PLIST" <<PL
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$ROTULO</string>
+  <key>ProgramArguments</key><array>
+    <string>$UV</string><string>run</string><string>--quiet</string><string>--python</string><string>3.12</string><string>$AGENTE</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>$DADOS/agente.log</string>
+  <key>StandardErrorPath</key><string>$DADOS/agente.log</string>
+</dict></plist>
+PL
+}
+iniciar_agente() {
+  agente_ok && return
+  launchctl bootout "gui/$(id -u)/$ROTULO" 2>/dev/null
+  launchctl bootstrap "gui/$(id -u)" "$PLIST" 2>/dev/null || launchctl kickstart -k "gui/$(id -u)/$ROTULO" 2>/dev/null
+  for _ in $(seq 30); do agente_ok && return; sleep 1; done
+}
+
+instalar() {
+  : > "$LOG"
+  passo "RU-FOOD $VERSAO para Mac · $(sw_vers -productVersion) · $(uname -m)"
+  # 1) Ollama
+  if [ -n "$(achar_ollama)" ]; then passo "Ollama encontrado: $(achar_ollama)"; else instalar_ollama; fi
+  ligar_ollama
+  passo "Ollama respondendo: $(curl -fs http://127.0.0.1:11434/api/version)"
+  # 2) uv + Python 3.12 (só para o agente)
+  if [ ! -x "$UV" ]; then
+    avisar "Baixando o ambiente do agente local (uv)…"
+    local arq; [ "$(uname -m)" = arm64 ] && arq=aarch64 || arq=x86_64
+    local tmp; tmp="$(mktemp -d)"
+    curl -fL --retry 3 "https://github.com/astral-sh/uv/releases/latest/download/uv-$arq-apple-darwin.tar.gz" -o "$tmp/uv.tgz" >>"$LOG" 2>&1 || falhar "Falha ao baixar o uv."
+    tar -xzf "$tmp/uv.tgz" -C "$tmp" && mkdir -p "$DADOS/uv" && cp "$tmp/uv-$arq-apple-darwin/uv" "$UV" && chmod +x "$UV" || falhar "Falha ao preparar o uv."
+    rm -rf "$tmp"
+  fi
+  avisar "Preparando o Python do agente…"
+  "$UV" python install 3.12 >>"$LOG" 2>&1 || falhar "Falha ao instalar o Python 3.12."
+  # 3) Programa do agente numa pasta fixa (o app pode ser movido sem quebrar a inicialização automática)
+  mkdir -p "$PROG" && cp "$RES/agente/agente.py" "$AGENTE"
+  # 4) Modelos de IA (EmbeddingGemma 2 + conversa, conforme a memória)
+  avisar "Baixando os modelos de IA. Pode levar vários minutos; avisaremos ao terminar."
+  rodar_agente --instalar-modelos >>"$LOG" 2>&1; local cod=$?
+  if [ $cod -eq 3 ]; then
+    avisar "Atualizando o Ollama para usar o EmbeddingGemma 2…"
+    instalar_ollama; ligar_ollama
+    rodar_agente --instalar-modelos --permitir-v1 >>"$LOG" 2>&1 || falhar "Falha ao baixar os modelos de IA."
+  elif [ $cod -ne 0 ]; then falhar "Falha ao baixar os modelos de IA."; fi
+  # 5) Token de pareamento (só neste Mac) e inicialização automática
+  rodar_agente --token >/dev/null 2>&1
+  rodar_agente --parar >/dev/null 2>&1
+  escrever_plist; iniciar_agente
+  agente_ok || falhar "O agente local não iniciou na porta 8787."
+  rodar_agente --diagnostico > "$DADOS/diagnostico.txt" 2>&1
+  cat "$DADOS/diagnostico.txt" >> "$LOG"
+  echo "$VERSAO" > "$DADOS/instalado"
+  passo "Instalação concluída."
+}
+
+desinstalar() {
+  [ "$(dialogo "Desinstalar o RU-FOOD deste Mac? A inicialização automática e o ambiente do agente serão removidos. O Ollama e os modelos permanecem." "Cancelar,Desinstalar" "Cancelar")" = "Desinstalar" ] || exit 0
+  launchctl bootout "gui/$(id -u)/$ROTULO" 2>/dev/null; rm -f "$PLIST"
+  if [ "$(dialogo "Apagar também a pasta de dados (documentos importados na IA local e o índice de busca)?" "Manter,Apagar" "Manter")" = "Apagar" ]; then
+    rm -rf "$DADOS"
+  else
+    rm -rf "$PROG" "$DADOS/uv" "$DADOS/instalado" "$DADOS/Navegador"
+  fi
+  dialogo "Pronto. Agora você pode arrastar o RU-FOOD da pasta Aplicativos para o Lixo." "OK" "OK" >/dev/null
+  exit 0
+}
+
+abrir_painel() {
+  local token=""
+  [ -f "$DADOS/Inteligencia/config.json" ] && token="$(plutil -extract token raw -o - "$DADOS/Inteligencia/config.json" 2>/dev/null)"
+  local url="$SITE/admin?desktop=1"; [ -n "$token" ] && url="$url#pareamento=$token"
+  for nav in "Google Chrome" "Microsoft Edge" "Brave Browser" "Chromium"; do
+    if open -Ra "$nav" 2>/dev/null; then
+      open -na "$nav" --args --app="$url" --user-data-dir="$DADOS/Navegador" --no-first-run --no-default-browser-check && return
+    fi
+  done
+  open "$url"   # Safari ou navegador padrão
+}
+
+# ───────── Início
+opcao=$(osascript -l JavaScript -e 'ObjC.import("AppKit"); ($.NSEvent.modifierFlags & (1 << 19)) ? "sim" : "nao"' 2>/dev/null)
+if [ "$opcao" = "sim" ]; then
+  r=$(dialogo "O que você quer fazer?" "Cancelar,Desinstalar,Reparar" "Reparar")
+  [ "$r" = "Desinstalar" ] && desinstalar
+  [ "$r" = "Reparar" ] && rm -f "$DADOS/instalado"
+  [ -z "$r" ] || [ "$r" = "Cancelar" ] && exit 0
+fi
+
+if [ ! -f "$DADOS/instalado" ]; then
+  while :; do
+    r=$(dialogo "Bem-vindo ao RU-FOOD para Mac.
+
+Para usar a IA local, o RU-FOOD vai, sem novas perguntas: instalar ou atualizar o Ollama (ollama.com), baixar o uv e o Python 3.12 do agente, baixar os modelos de IA (até 8 GB), criar a pasta de dados e iniciar o agente local junto com o Mac.
+
+Os dados do sistema (cardápios, estoque, compras…) continuam no Supabase, não ficam neste Mac. Detalhes na seção 7 dos Termos." "Cancelar,Ler os Termos,Aceitar e instalar" "Aceitar e instalar")
+    case "$r" in
+      "Ler os Termos") open "$SITE/termos#desktop" ;;
+      "Aceitar e instalar") break ;;
+      *) exit 0 ;;
+    esac
+  done
+  avisar "Instalação iniciada. Você pode continuar usando o Mac."
+  instalar
+  dialogo "Tudo pronto! A IA local do RU-FOOD está instalada e vai iniciar sozinha quando você entrar no Mac.
+
+Para abrir o painel, use o RU-FOOD na pasta Aplicativos ou no Dock." "Abrir o painel" "Abrir o painel" >/dev/null
+else
+  # Atualização do app: recopia o agente se mudou
+  cmp -s "$RES/agente/agente.py" "$AGENTE" || { cp "$RES/agente/agente.py" "$AGENTE"; launchctl kickstart -k "gui/$(id -u)/$ROTULO" 2>/dev/null; sleep 2; }
+  ligar_ollama 2>/dev/null
+  iniciar_agente
+fi
+abrir_painel

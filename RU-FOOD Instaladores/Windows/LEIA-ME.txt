@@ -1,0 +1,16 @@
+INSTALADOR RU-FOOD (Windows)
+
+Gerar o .exe (no Mac ou Linux, com o NSIS):
+  brew install makensis        # uma vez
+  cd web && node scripts/gerar-termos.ts && LC_ALL=en_US.UTF-8 makensis -INPUTCHARSET UTF8 instalador/ru-food.nsi
+Saída: web/public/download/RU-FOOD-Instalador.exe (servido pelo site em /download/).
+
+O que o instalador faz (sem perguntas, conforme os Termos, seção 7):
+  - verifica o Ollama e, se faltar, baixa de ollama.com e instala em modo silencioso;
+  - baixa o uv e o Python 3.12 (só para o agente local);
+  - baixa os modelos de IA conforme a memória;
+  - cria atalhos, inicialização automática e o token de pareamento;
+  - gera diagnostico.txt na pasta do programa.
+
+Instalação por usuário (sem pedir administrador): %LOCALAPPDATA%\Programs\RU-FOOD
+Dados: %LOCALAPPDATA%\RU-FOOD   ·   Log: %LOCALAPPDATA%\RU-FOOD\instalacao.log

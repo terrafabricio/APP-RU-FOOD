@@ -1,0 +1,17 @@
+RU-FOOD para Mac
+================
+
+1. Arraste o RU-FOOD para a pasta Aplicativos.
+2. Abra o RU-FOOD. Na primeira vez, o macOS avisa que o app não é da App Store:
+   - macOS 15 ou mais novo: Ajustes do Sistema → Privacidade e Segurança → role até
+     "RU-FOOD foi bloqueado" → Abrir Mesmo Assim.
+   - macOS 12 a 14: clique com o botão direito no RU-FOOD → Abrir → Abrir.
+3. Leia e aceite os Termos. A instalação da IA local (Ollama, modelos e agente) segue
+   sozinha e avisa quando terminar. Pode levar vários minutos.
+
+Depois disso, basta abrir o RU-FOOD para entrar no painel (https://rufood.vercel.app).
+Segure a tecla Option ao abrir para Reparar ou Desinstalar.
+
+Requisitos: macOS 12 ou mais novo, cerca de 12 GB livres e internet na instalação.
+Os dados do sistema ficam no Supabase; neste Mac ficam só os documentos da IA local,
+em ~/Library/Application Support/RU-FOOD.
